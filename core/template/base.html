@@ -1,0 +1,286 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | {% block title %}Office Management{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- GLOBAL VARIABLES & SIDEBAR CSS --- */
+        :root {
+            /* Palette */
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --secondary: #334155;
+            --accent: #3b82f6;
+            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #1e293b;
+            --text-dim: #64748b;
+            --text-light: #f8fafc;
+
+            /* Dimensions */
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 80px;
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, rgb(239, 246, 255) 0%, rgb(241, 245, 249) 90%);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            /* Moved overflow-x here to allow sticky header to work */
+            overflow-x: hidden; 
+        }
+
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary);
+            background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: var(--transition);
+            z-index: 1001; /* Higher than header to stay on top */
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .sidebar-header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-menu {
+            padding: 20px 10px;
+            flex: 1;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .sidebar-menu a:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* ACTIVE CLASS STYLE */
+        .sidebar-menu a.active {
+            color: white;
+            background: var(--accent-gradient);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .sidebar-menu i {
+            font-size: 1.2rem;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        .sidebar.collapsed span {
+            display: none;
+        }
+
+        /* MAIN LAYOUT WRAPPERS */
+        .main-container {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            /* Removed 'overflow-x: hidden' from here because it breaks position: sticky */
+        }
+
+        .sidebar.collapsed+.main-container {
+            margin-left: var(--sidebar-collapsed);
+        }
+
+        /* STICKY NAVBAR */
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); /* Safari support */
+            height: 80px;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            /* Sticky Logic */
+            position: sticky;
+            top: 0;
+            z-index: 1000; 
+            
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* HEADER SEARCH BAR */
+        .search-bar {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 50px;
+            padding: 10px 20px;
+            width: 400px;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            padding-left: 12px;
+        }
+
+        .content-padding {
+            padding: 30px 40px;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        main {
+            animation: fadeIn 0.5s forwards;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <!-- LOGO -->
+            <img src="{% static 'img/footer-logo.png' %}" alt="Nexus OS" style="height: 40px; margin-right: 15px;">
+            <span style="font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px;">OMS</span>
+        </div>
+
+        <!-- SIDEBAR MENU -->
+        <div class="sidebar-menu">
+            <!-- Dashboard -->
+            <a href="{% url 'index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                <i class="fas fa-th-large"></i> <span>Dashboard</span>
+            </a>
+
+            <!-- Inbox -->
+            <a href="{% url 'inbox' %}" class="{% if request.resolver_match.url_name == 'inbox' %}active{% endif %}">
+                <i class="fas fa-envelope"></i> <span>Multi-Channel Inbox</span>
+            </a>
+
+            <!-- Complaints -->
+            <a href="{% url 'Analytics & Reporting' %}"
+                class="{% if request.resolver_match.url_name == 'Analytics & Reporting' %}active{% endif %}">
+                <i class="fas fa-file-invoice"></i> <span>Analytics & Reporting</span>
+            </a>
+
+            <!-- Analytics -->
+            <a href="{% url 'Document Repository' %}"
+                class="{% if request.resolver_match.url_name == 'Document Repository' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i> <span>Document Repository</span>
+            </a>
+
+            <!-- Settings -->
+            <a href="#" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                <i class="fas fa-cog"></i> <span>Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="main-container">
+        <!-- HEADER (STICKY) -->
+        <header>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <i class="fas fa-bars" style="cursor: pointer; color: var(--secondary); font-size: 1.2rem;"
+                    onclick="toggleSidebar()"></i>
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color: #64748b;"></i>
+                    <input type="text" placeholder="Type to search...">
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 25px;">
+                <div style="position: relative; cursor: pointer;">
+                    <i class="far fa-bell fa-lg" style="color: var(--secondary);"></i>
+                    <span
+                        style="position: absolute; top: -5px; right: -5px; width: 10px; height: 10px; background: var(--danger); border-radius: 50%;"></span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                    <div style="text-align: right;">
+                        <p style="font-size: 0.9rem; font-weight: 700;">Arjun Mehta</p>
+                        <p style="font-size: 0.75rem; color: #64748b;">Administrator</p>
+                    </div>
+                    <div
+                        style="width: 45px; height: 45px; background: var(--accent-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        AM
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-padding">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

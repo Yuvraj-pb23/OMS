@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block title %}CCPCR | Intelligence Command Center{% endblock %}
+
+{% block content %}
+<!-- Dependencies -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+    #ccpcr-dashboard-core {
+        --primary: #1e40af;
+        --primary-dark: #0f172a;
+        --primary-light: #3b82f6;
+        --accent: #7c3aed;
+        --success: #059669;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --text-main: #0f172a;
+        --text-dim: #475569;
+        --card-bg: rgba(255, 255, 255, 0.95);
+        --card-border: rgba(148, 163, 184, 0.2);
+        
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: radial-gradient(circle at 10% 20%, #e0f2fe 0%, #1e3a8a 90%);
+        padding: 30px;
+        min-height: 100vh;
+        color: var(--text-main);
+    }
+
+    .dashboard-container { max-width: 1440px; margin: 0 auto; }
+
+    /* --- Navigation & Toggles --- */
+    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    
+    .category-section { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+    .category-toggle { display: flex; gap: 8px; background: white; padding: 6px; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    
+    .cat-btn { 
+        border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-weight: 700; 
+        display: flex; align-items: center; gap: 10px; transition: 0.3s; background: transparent; color: var(--text-dim);
+    }
+    .cat-btn.active { background: var(--primary-dark); color: white; }
+
+    .view-toggle { background: #cbd5e1; padding: 4px; border-radius: 12px; display: flex; gap: 4px; }
+    .toggle-btn { border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.3s; background: transparent; color: var(--text-dim); }
+    .toggle-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    /* --- KPI Cards --- */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid var(--card-border); }
+    .kpi-title { font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
+    .kpi-value { font-size: 1.8rem; font-weight: 800; margin: 8px 0; display: block; }
+
+    /* --- Flip Container --- */
+    .flip-card { perspective: 2000px; min-height: 650px; }
+    .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+    .is-flipped .flip-card-inner { transform: rotateY(180deg); }
+    .card-front, .card-back { position: absolute; width: 100%; backface-visibility: hidden; border-radius: 30px; padding: 35px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 15px 35px rgba(0,0,0,0.05); min-height: 600px; }
+    .card-back { transform: rotateY(180deg); }
+
+    .chart-box { background: #f8fafc; border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; height: 100%; }
+    
+    /* --- Data Matrix Styling --- */
+    .matrix-scroll-area { max-height: 480px; overflow-y: auto; padding-right: 10px; }
+    .matrix-scroll-area::-webkit-scrollbar { width: 6px; }
+    .matrix-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    .data-matrix-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    .data-matrix-table th { text-align: left; padding: 0 15px; color: var(--text-dim); font-size: 0.85rem; }
+    .data-matrix-table td { padding: 15px; background: white; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+    .data-matrix-table tr td:first-child { border-left: 1px solid #f1f5f9; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    .data-matrix-table tr td:last-child { border-right: 1px solid #f1f5f9; border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+    /* Badge Logic */
+    .badge { padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-yellow { background: #fef9c3; color: #854d0e; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div id="ccpcr-dashboard-core">
+    <div class="dashboard-container">
+        
+        <!-- Top Nav -->
+        <div class="header-section">
+            <div>
+                <h1 style="margin:0; font-weight: 800;">Command <span style="color: var(--primary-light);">Intelligence</span></h1>
+                <p style="margin: 5px 0 0 0; color: var(--text-dim);">Real-time monitoring and reporting engine</p>
+            </div>
+            <div class="view-toggle">
+                <button onclick="flip(false)" id="btn-front" class="toggle-btn active"><i class="fas fa-chart-line"></i> Analytics</button>
+                <button onclick="flip(true)" id="btn-back" class="toggle-btn"><i class="fas fa-database"></i> Data Matrix</button>
+            </div>
+        </div>
+
+        <!-- Category Toggle -->
+        <div class="category-section">
+            <div class="category-toggle">
+                <button onclick="switchCategory('letters')" id="cat-letters" class="cat-btn">
+                    <i class="fas fa-envelope-open-text"></i> Letters
+                </button>
+                <button onclick="switchCategory('complaints')" id="cat-complaints" class="cat-btn active">
+                    <i class="fas fa-exclamation-circle"></i> Complaints
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Summary -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-title" id="kpi-label-1">Total Processed</span>
+                <span class="kpi-value" id="kpi-val-1">--</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title" id="kpi-label-2">Pending Action</span>
+                <span class="kpi-value" style="color: var(--danger);" id="kpi-val-2">--</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title" id="kpi-label-3">Avg. Resolution</span>
+                <span class="kpi-value" id="kpi-val-3">--</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title" id="kpi-label-4">Field Capacity</span>
+                <span class="kpi-value" id="kpi-val-4">--</span>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="flip-card" id="mainFlip">
+            <div class="flip-card-inner">
+                
+                <!-- FRONT: Visual Reports -->
+                <div class="card-front">
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; height: 500px;">
+                        <div class="chart-box">
+                            <h4 id="chart-title-1">Priority Distribution</h4>
+                            <div style="height: 380px;"><canvas id="distributionChart"></canvas></div>
+                        </div>
+                        <div class="chart-box">
+                            <h4 id="chart-title-2">Resolution Efficiency (6 Months)</h4>
+                            <div style="height: 380px;"><canvas id="efficiencyChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BACK: Data Matrix -->
+                <div class="card-back">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h3 id="matrix-title" style="margin:0;">Workflow Matrix</h3>
+                        <div>
+                            <input type="text" placeholder="Search records..." style="padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd; margin-right: 10px;">
+                            <button style="padding: 8px 16px; border-radius: 8px; background: var(--primary); color: white; border: none; cursor: pointer;">Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="matrix-scroll-area">
+                        <table class="data-matrix-table">
+                            <thead>
+                                <tr>
+                                    <th>Ref ID</th>
+                                    <th>Source / Department</th>
+                                    <th>Officer In-Charge</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matrix-body">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dashboardData = {
+        letters: {
+            kpis: ['1,240', '42', '2.8 Days', '88%'],
+            chartDist: [40, 30, 20, 10],
+            chartEff: { res: [210, 240, 180, 290, 310, 340], pen: [40, 30, 50, 20, 35, 15] },
+            matrix: [
+                { id: '#LTR-001', dept: 'Education Dept', lead: 'John Smith', status: 'Operational', cap: '90%' },
+                { id: '#LTR-045', dept: 'Health Bureau', lead: 'Sarah Jenkins', status: 'Review', cap: '65%' },
+                { id: '#LTR-102', dept: 'Social Welfare', lead: 'Michael Chen', status: 'Operational', cap: '82%' },
+                { id: '#LTR-315', dept: 'Labor Commission', lead: 'Sarah Connor', status: 'Review', cap: '40%' },
+                { id: '#LTR-098', dept: 'Child Safety Unit', lead: 'Robert Fox', status: 'Operational', cap: '95%' },
+                { id: '#LTR-221', dept: 'Budget Office', lead: 'Elena Rodriguez', status: 'Bottleneck', cap: '25%' },
+                { id: '#LTR-404', dept: 'Public Outreach', lead: 'James Wilson', status: 'Operational', cap: '70%' },
+                { id: '#LTR-512', dept: 'Transport Dept', lead: 'Linda Wu', status: 'Operational', cap: '88%' },
+                { id: '#LTR-601', dept: 'Infrastructure Bureau', lead: 'Tom Hardy', status: 'Review', cap: '55%' }
+            ]
+        },
+        complaints: {
+            kpis: ['4,592', '128', '4.2 Days', '92%'],
+            chartDist: [35, 25, 15, 25],
+            chartEff: { res: [450, 520, 480, 610, 590, 720], pen: [120, 90, 150, 80, 110, 60] },
+            matrix: [
+                { id: '#CMP-882', dept: 'Legal Drafting', lead: 'Anil Verma', status: 'Operational', cap: '92%' },
+                { id: '#CMP-102', dept: 'Suo Motu Cell', lead: 'Priya Rai', status: 'Bottleneck', cap: '45%' },
+                { id: '#CMP-210', dept: 'RTI Compliance', lead: 'Meera Joshi', status: 'Operational', cap: '95%' },
+                { id: '#CMP-943', dept: 'Cyber Crime Unit', lead: 'David Park', status: 'Operational', cap: '78%' },
+                { id: '#CMP-331', dept: 'Protection Unit', lead: 'Lisa Ray', status: 'Operational', cap: '88%' },
+                { id: '#CMP-156', dept: 'Shelter Mgmt', lead: 'Kevin Hart', status: 'Review', cap: '55%' },
+                { id: '#CMP-774', dept: 'Transport Safety', lead: 'Angela Yu', status: 'Operational', cap: '91%' },
+                { id: '#CMP-502', dept: 'District Liaison', lead: 'Sanjay Dutt', status: 'Bottleneck', cap: '30%' },
+                { id: '#CMP-661', dept: 'Forensic Lab', lead: 'Dr. Aris', status: 'Operational', cap: '85%' },
+                { id: '#CMP-209', dept: 'Juvenile Justice', lead: 'Oscar Isaac', status: 'Operational', cap: '99%' },
+                { id: '#CMP-118', dept: 'Emergency Response', lead: 'Marcus Aurelius', status: 'Review', cap: '62%' }
+            ]
+        }
+    };
+
+    let distChart, effChart;
+
+    function getStatusBadge(status) {
+        if (status === 'Operational') return 'badge-green';
+        if (status === 'Review') return 'badge-yellow';
+        return 'badge-red';
+    }
+
+    function switchCategory(type) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`cat-${type}`).classList.add('active');
+
+        const data = dashboardData[type];
+
+        // Update KPIs
+        data.kpis.forEach((val, i) => {
+            document.getElementById(`kpi-val-${i+1}`).innerText = val;
+        });
+
+        // Update Charts
+        distChart.data.datasets[0].data = data.chartDist;
+        distChart.update();
+
+        effChart.data.datasets[0].data = data.chartEff.res;
+        effChart.data.datasets[1].data = data.chartEff.pen;
+        effChart.update();
+
+        // Update Matrix Table
+        const tbody = document.getElementById('matrix-body');
+        tbody.innerHTML = data.matrix.map(row => `
+            <tr>
+                <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--primary); font-weight:700;">${row.id}</code></td>
+                <td style="font-weight: 700;">${row.dept}</td>
+                <td>${row.lead}</td>
+                <td><span class="badge ${getStatusBadge(row.status)}">${row.status}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; min-width: 80px;">
+                            <div style="width: ${row.cap}; height: 100%; background: var(--primary-light); border-radius: 4px;"></div>
+                        </div>
+                        <span style="font-size: 0.8rem; font-weight: 700;">${row.cap}</span>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('matrix-title').innerText = `${type.charAt(0).toUpperCase() + type.slice(1)} Intelligence Matrix`;
+    }
+
+    function flip(isFlipped) {
+        const card = document.getElementById('mainFlip');
+        const bFront = document.getElementById('btn-front');
+        const bBack = document.getElementById('btn-back');
+        if(isFlipped) {
+            card.classList.add('is-flipped');
+            bBack.classList.add('active'); bFront.classList.remove('active');
+        } else {
+            card.classList.remove('is-flipped');
+            bFront.classList.add('active'); bBack.classList.remove('active');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        distChart = new Chart(document.getElementById('distributionChart'), {
+            type: 'doughnut',
+            data: { 
+                labels: ['High Priority', 'Medium', 'Routine', 'Closed'], 
+                datasets: [{ data: [], backgroundColor: ['#1e40af', '#3b82f6', '#7c3aed', '#059669'], borderWeight: 0 }] 
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        effChart = new Chart(document.getElementById('efficiencyChart'), {
+            type: 'bar',
+            data: { 
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], 
+                datasets: [
+                    { label: 'Resolved', data: [], backgroundColor: '#3b82f6', borderRadius: 6 },
+                    { label: 'Pending', data: [], backgroundColor: '#cbd5e1', borderRadius: 6 }
+                ] 
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        switchCategory('complaints');
+    });
+</script>
+{% endblock %}
