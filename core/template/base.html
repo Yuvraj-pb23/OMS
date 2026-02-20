@@ -247,7 +247,7 @@
                     onclick="toggleSidebar()"></i>
                 <div class="search-bar">
                     <i class="fas fa-search" style="color: #64748b;"></i>
-                    <input type="text" placeholder="Type to search...">
+                    <input type="text" id="globalSearch" placeholder="Type to search...">
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 25px;">
@@ -275,11 +275,34 @@
         </main>
     </div>
 
-    <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
+   <script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // Global Search Logic
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("globalSearch");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", function () {
+                const searchValue = this.value.toLowerCase();
+
+                // Try to find document table (only exists on Document Repository page)
+                const tableBody = document.getElementById("tableBody");
+
+                if (tableBody) {
+                    const rows = tableBody.querySelectorAll("tr");
+
+                    rows.forEach(row => {
+                        const text = row.innerText.toLowerCase();
+                        row.style.display = text.includes(searchValue) ? "" : "none";
+                    });
+                }
+            });
         }
-    </script>
+    });
+</script>
     {% block extra_js %}{% endblock %}
 </body>
 

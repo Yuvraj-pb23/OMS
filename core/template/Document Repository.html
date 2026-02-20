@@ -1,13 +1,356 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>hello</h1>
-        <h1>hello</h1>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}Document Repository{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --card-bg: radial-gradient(circle at 10% 20%, #e0f2fe 0%, #1e3a8a 90%);
+        --body-bg: #0f172a; 
+        --text-main: #0f172a;        
+        --text-on-dark: #ffffff;     
+        --text-body: #1e293b;        
+        --text-muted: #475569;       
+        --accent-primary: #2563eb;    
+        --accent-hover: #1d4ed8;
+        --panel-border: rgba(255, 255, 255, 0.3);
+        --row-hover: rgba(255, 255, 255, 0.2);
+        --success: #059669;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --header-sticky-bg: #d4e9f7; /* Solid color matching top of gradient for sticky header */
+    }
+
+    body {
+        background-color: var(--body-bg);
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        min-height: 100vh;
+    }
+
+    .glass-panel {
+        background: var(--card-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 28px;
+        padding: 2.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        max-width: 1200px;
+        width: 95%;
+        margin: 4rem auto;
+        animation: fadeIn 0.6s ease-out;
+        color: var(--text-body);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+        color: var(--text-main);
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .repo-controls { margin-bottom: 1.5rem; }
+
+    .search-input-wrapper { position: relative; }
+
+    .search-input-wrapper input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 14px;
+        padding: 0.85rem 1rem 0.85rem 3rem;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .search-input-wrapper i {
+        position: absolute;
+        left: 1.1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-body);
+    }
+
+    .upload-btn {
+        background: var(--text-main);
+        color: white;
+        border: none;
+        padding: 0.85rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .category-filters {
+        display: flex;
+        gap: 0.6rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .category-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--text-main);
+        padding: 0.55rem 1.1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .category-btn.active {
+        background: var(--text-main);
+        color: white;
+    }
+
+    /* --- SCROLLBAR STYLING START --- */
+    .table-container { 
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 18px;
+        padding: 0 10px 10px 10px; /* Adjusted padding for sticky header */
+        overflow-x: auto; 
+        
+        /* Fixed height for scrollability */
+        max-height: 500px; 
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Webkit Scrollbar (Chrome, Safari, Edge) */
+    .table-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .table-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+        background: rgba(15, 23, 42, 0.2);
+        border-radius: 10px;
+    }
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(15, 23, 42, 0.4);
+    }
+    /* --- SCROLLBAR STYLING END --- */
+
+    .table-custom {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-custom thead th {
+        text-align: left;
+        padding: 1.2rem 1rem;
+        color: var(--text-main);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        
+        /* Sticky Header Logic */
+        position: sticky;
+        top: 0;
+        background: #cedef7; /* Matches card background to hide rows sliding up */
+        z-index: 10;
+    }
+
+    .table-custom tbody td {
+        padding: 1.1rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: 500;
+    }
+
+    .table-custom tbody tr:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .case-ref {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+    }
+
+    /* Badge Colors */
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    .badge-letter { background: #dbeafe; color: #1e40af; }
+    .badge-summons { background: #fee2e2; color: #991b1b; }
+    .badge-evidence { background: #f3e8ff; color: #6b21a8; }
+    .badge-contract { background: #d1fae5; color: #065f46; }
+    .badge-report { background: #fef3c7; color: #92400e; }
+
+    .action-btn {
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: var(--text-main);
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .action-btn:hover { background: var(--text-main); color: white; }
+
+    .toast {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        border-left: 6px solid var(--accent-primary);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        margin-top: 10px;
+    }
+</style>
+
+<div class="glass-panel">
+    <div class="section-title">
+        <span><i class="fas fa-folder-open"></i> Document Repository</span>
+        <button class="upload-btn" onclick="notify('Opening Upload Dialog...')">
+            <i class="fas fa-cloud-arrow-up"></i> Upload
+        </button>
+    </div>
+
+    <div class="repo-controls">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by name, reference, or author...">
+        </div>
+    </div>
+
+    <div class="category-filters" id="categoryFilters">
+        <button class="category-btn active" data-type="all">All Files</button>
+        <button class="category-btn" data-type="Letter">Letters</button>
+        <button class="category-btn" data-type="Summons">Summons</button>
+        <button class="category-btn" data-type="Evidence">Evidence</button>
+        <button class="category-btn" data-type="Contract">Contracts</button>
+        <button class="category-btn" data-type="Report">Reports</button>
+    </div>
+
+    <div class="table-container">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Reference</th>
+                    <th>Author</th>
+                    <th>Date</th>
+                    <th style="text-align:right">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;"></div>
+
+<script>
+    const documents = [
+        { id: 1, name: 'Q4_Tax_Exemption.pdf', type: 'Letter', caseRef: 'TX-2024', user: 'A. Vance', date: 'Nov 20, 2024', icon: 'fa-file-pdf' },
+        { id: 2, name: 'Witness_Statement_01.docx', type: 'Evidence', caseRef: 'CR-8821', user: 'S. Rogers', date: 'Dec 01, 2024', icon: 'fa-file-word' },
+        { id: 3, name: 'Hearing_Notice_Final.pdf', type: 'Summons', caseRef: 'CV-4490', user: 'Clerk Office', date: 'Dec 05, 2024', icon: 'fa-file-pdf' },
+        { id: 4, name: 'Employment_Agreement_JohnDoe.pdf', type: 'Contract', caseRef: 'HR-102', user: 'M. Specter', date: 'Dec 08, 2024', icon: 'fa-file-contract' },
+        { id: 5, name: 'Site_Photos_Jan.zip', type: 'Evidence', caseRef: 'CV-4490', user: 'P. Parker', date: 'Jan 10, 2025', icon: 'fa-file-archive' },
+        { id: 6, name: 'Annual_Fiscal_Report.xlsx', type: 'Report', caseRef: 'FIN-2024', user: 'R. Zane', date: 'Jan 12, 2025', icon: 'fa-file-excel' },
+        { id: 7, name: 'Subpoena_Bank_Records.pdf', type: 'Summons', caseRef: 'CR-9001', user: 'Judge Stone', date: 'Jan 15, 2025', icon: 'fa-file-pdf' },
+        { id: 8, name: 'Settlement_Draft_v2.docx', type: 'Contract', caseRef: 'CV-2121', user: 'L. Litt', date: 'Feb 02, 2025', icon: 'fa-file-word' },
+        { id: 9, name: 'Client_Correspondence.msg', type: 'Letter', caseRef: 'GEN-441', user: 'D. Paulsen', date: 'Feb 05, 2025', icon: 'fa-envelope' },
+        { id: 10, name: 'Forensic_Analysis_Rpt.pdf', type: 'Report', caseRef: 'CR-8821', user: 'Lab Tech', date: 'Feb 10, 2025', icon: 'fa-microscope' },
+        { id: 11, name: 'Lease_Agreement_Renewal.pdf', type: 'Contract', caseRef: 'PROP-99', user: 'K. Bennett', date: 'Feb 14, 2025', icon: 'fa-file-signature' },
+        { id: 12, name: 'Damage_Assessment.jpg', type: 'Evidence', caseRef: 'CV-4490', user: 'Insurer', date: 'Feb 18, 2025', icon: 'fa-file-image' }
+    ];
+
+    let currentFilter = 'all';
+
+    function renderTable() {
+        const body = document.getElementById('tableBody');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        
+        body.innerHTML = '';
+
+        const filtered = documents.filter(doc => {
+            const matchesSearch = doc.name.toLowerCase().includes(searchTerm) || 
+                                 doc.caseRef.toLowerCase().includes(searchTerm) ||
+                                 doc.user.toLowerCase().includes(searchTerm);
+            const matchesType = currentFilter === 'all' || doc.type === currentFilter;
+            return matchesSearch && matchesType;
+        });
+
+        if (filtered.length === 0) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: rgba(255,255,255,0.6)">No documents found matching your criteria.</td></tr>';
+            return;
+        }
+
+        filtered.forEach(doc => {
+            body.innerHTML += `
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px">
+                            <i class="fas ${doc.icon}" style="color:var(--accent-primary); width: 20px; text-align:center"></i>
+                            <span style="color:var(--text-main)">${doc.name}</span>
+                        </div>
+                    </td>
+                    <td><span class="badge badge-${doc.type.toLowerCase()}">${doc.type}</span></td>
+                    <td><span class="case-ref">${doc.caseRef}</span></td>
+                    <td>${doc.user}</td>
+                    <td style="color:var(--text-muted); font-size: 0.85rem">${doc.date}</td>
+                    <td style="text-align:right">
+                        <button class="action-btn" title="Download" onclick="notify('Downloading ${doc.name}...')"><i class="fas fa-download"></i></button>
+                        <button class="action-btn" title="View" onclick="notify('Opening ${doc.name}...')"><i class="fas fa-expand"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Filter Button Logic
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelector('.category-btn.active').classList.remove('active');
+            btn.classList.add('active');
+            currentFilter = btn.getAttribute('data-type');
+            renderTable();
+        });
+    });
+
+    function notify(msg) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i class="fas fa-info-circle" style="margin-right:8px; color:var(--accent-primary)"></i> ${msg}`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    window.onload = renderTable;
+</script>
+
+{% endblock %}

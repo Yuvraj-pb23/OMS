@@ -216,16 +216,22 @@
         100% { opacity: 1; transform: translateY(0); }
     }
     
-    .stat-card {
-        padding: 24px;
-        border-radius: 20px;
-        box-shadow: var(--shadow-md);
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-        cursor: default;
-        animation: floatIn 0.5s ease-out backwards;
-    }
+.stat-card {
+    padding: 24px;
+    border-radius: 20px;
+    
+    /* ADD THESE THREE LINES */
+    background: white;        /* Or use rgba(255, 255, 255, 0.9) for glass effect */
+    color: var(--slate-800);  /* Sets text to dark slate */
+    border: 1px solid var(--slate-200); /* Optional: adds a subtle border */
+
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    animation: floatIn 0.5s ease-out backwards;
+}
     
     .stat-card:nth-child(1) { animation-delay: 0.1s; }
     .stat-card:nth-child(2) { animation-delay: 0.2s; }
@@ -828,22 +834,22 @@
 
     <!-- Stats Cards with Icons -->
     <div class="stats-grid">
-        <div class="stat-card card-blue">
+        <div class="stat-card ">
             <span>Total Inbox</span>
             <h2 id="statTotal">13</h2>
             <div class="stat-icon">📬</div>
         </div>
-        <div class="stat-card card-green">
+        <div class="stat-card ">
             <span>Resolution Rate</span>
             <h2 id="statResolution">94.2%</h2>
             <div class="stat-icon">✅</div>
         </div>
-        <div class="stat-card card-red">
+        <div class="stat-card ">
             <span>Urgent Items</span>
             <h2 id="statUrgent">4</h2>
             <div class="stat-icon">⚠️</div>
         </div>
-        <div class="stat-card card-purple">
+        <div class="stat-card ">
             <span>Unread Messages</span>
             <h2 id="statUnread">7</h2>
             <div class="stat-icon">🔔</div>
