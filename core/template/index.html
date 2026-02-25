@@ -107,6 +107,7 @@
             flex-direction: column;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(10px);
+            overflow-x: hidden;
         }
 
         .sidebar.collapsed {
@@ -120,17 +121,26 @@
             padding: 0 25px;
             background: rgba(0, 0, 0, 0.2);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
         }
 
         .sidebar-header img {
             height: 40px;
             width: auto;
             object-fit: contain;
+            margin-right: 15px;
             transition: var(--transition);
         }
 
+        .sidebar.collapsed .sidebar-header {
+            padding: 0;
+            justify-content: center;
+        }
+
         .sidebar.collapsed .sidebar-header img {
-            height: 30px;
+            height: 32px;
+            margin-right: 0;
+            max-width: 60px;
         }
 
         .sidebar-menu {
@@ -580,7 +590,7 @@
             box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
-        /* --- DRAFTS & PROFILES (Interactive Cards) --- */
+        /* --- DRAFTS & PROFILES --- */
         .draft-big-card {
             background: white;
             border-radius: 24px;
@@ -672,7 +682,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* Cursor class for Typewriter */
         .typing-cursor::after {
             content: '|';
             display: inline-block;
@@ -684,10 +693,28 @@
 </head>
 
 <body>
+    <!-- 1. ADDED PERSISTENCE SCRIPT (Checks storage BEFORE body draws) -->
+    <script>
+        (function () {
+            const savedState = localStorage.getItem('sidebarState');
+            if (savedState === 'collapsed') {
+                document.write(`
+                    <style id="temp-sidebar-styles">
+                        .sidebar { width: 80px !important; }
+                        .main-container { margin-left: 80px !important; }
+                        .sidebar span { display: none !important; }
+                        .sidebar-header { padding: 0 !important; justify-content: center !important; }
+                        .sidebar-header img { margin-right: 0 !important; height: 32px !important; }
+                    </style>
+                `);
+            }
+        })();
+    </script>
+
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="{% static 'img/footer-logo.png' %}" alt="Nexus OS" style="height: 40px; margin-right: 15px;">
+            <img src="{% static 'img/footer-logo.png' %}" alt="Nexus OS">
             <span style="font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px;">OMS</span>
         </div>
         <div class="sidebar-menu">
@@ -700,14 +727,17 @@
                 <span>Multi-Channel Inbox</span>
             </a>
             <a href="{% url 'Analytics & Reporting' %}">
-                <i class="fas fa-envelope"></i>
+                <i class="fas fa-file-invoice"></i>
                 <span>Analytics & Reporting</span>
             </a>
             <a href="{% url 'Document Repository' %}">
-                <i class="fas fa-envelope"></i>
+                <i class="fas fa-chart-pie"></i>
                 <span>Document Repository</span>
             </a>
-            <a href=""><i class="fas fa-cog"></i> <span>Settings</span></a>
+            <a href="{% url 'setting' %}"
+                class="{% if request.resolver_match.url_name == 'setting' %}active{% endif %}">
+                <i class="fas fa-cog"></i> <span>Settings</span>
+            </a>
         </div>
     </nav>
 
@@ -798,7 +828,7 @@
                             <li class="li-blue"><i class="fas fa-circle" style="color: #3b82f6; font-size: 8px;"></i> 2
                                 letters recommended for forwarding.</li>
                         </ul>
-                        <div class="ai-button-group">
+                        <div style="display: flex; gap: 15px; margin-top: 15px;">
                             <button class="ai-btn-blue" onclick="showPage('letters-view')">
                                 View Letters <i class="fas fa-arrow-right" style="font-size: 0.8rem;"></i>
                             </button>
@@ -1034,7 +1064,6 @@
                     <div class="draft-big-card">
                         <h3 class="section-title"><i class="fas fa-list"></i> All Drafts</h3>
                         <div style="overflow-y: auto;">
-                            <!-- Removed 'active' class here so JS sets it consistently -->
                             <div class="draft-item" onclick="loadDraft(0, this)">
                                 <p style="font-weight: 700; font-size: 0.9rem;">Ref: DRY-2024-1456</p>
                                 <p style="font-size: 0.75rem; color: var(--text-dim);">Subject: Budget Allocation
@@ -1058,7 +1087,6 @@
                         <h3 class="section-title"><i class="fas fa-file-alt"></i> Draft Summary</h3>
                         <div id="draft-summary" class="content-box"
                             style="line-height: 1.6; color: #475569; overflow-y: auto;">
-                            <!-- Content loaded via JS -->
                         </div>
                     </div>
 
@@ -1067,7 +1095,6 @@
                         <h3 class="section-title"><i class="fas fa-pen-nib"></i> Draft Content</h3>
                         <div id="draft-body" class="content-box"
                             style="line-height: 1.6; color: #475569; overflow-y: auto; white-space: pre-wrap;">
-                            <!-- Content loaded via JS -->
                         </div>
                     </div>
 
@@ -1082,7 +1109,6 @@
                         <div class="content-box" style="background: transparent; min-height: 150px;">
                             <p id="ai-suggestion" class="typing-cursor"
                                 style="font-style: italic; color: #4338ca; font-weight: 500; font-size: 0.95rem; line-height: 1.6;">
-                                <!-- AI Typewriter text goes here -->
                             </p>
                         </div>
                         <button class="btn-action" style="margin-top: 20px; background: #6366f1;">Use This
@@ -1097,7 +1123,7 @@
                     onclick="showPage('dashboard-view')"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
 
                 <div class="draft-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-                    <!-- Card 1: Mailbox / Letters List -->
+                    <!-- Card 1: Select Letter -->
                     <div class="draft-big-card">
                         <h3 class="section-title"><i class="fas fa-inbox"></i> Select Letter</h3>
                         <div style="overflow-y: auto;">
@@ -1112,10 +1138,6 @@
                                 <p style="font-weight: 700; font-size: 0.9rem;">Ref: DRY-2024-1455</p>
                                 <p style="font-size: 0.75rem; color: var(--text-dim);">Subject: Infrastructure Plan</p>
                             </div>
-                            <div class="draft-item" onclick="selectLetter('DRY-2024-1454', 'School Approval', this)">
-                                <p style="font-weight: 700; font-size: 0.9rem;">Ref: DRY-2024-1454</p>
-                                <p style="font-size: 0.75rem; color: var(--text-dim);">Subject: School Approval</p>
-                            </div>
                         </div>
                     </div>
 
@@ -1125,8 +1147,8 @@
                         <div style="overflow-y: auto;">
                             <div class="draft-item"
                                 onclick="selectProfile('Priya Kapoor', 'Public Works Head', 'PK', this)">
-                                <div class="profile-list-item" style="display:flex; align-items:center; gap: 15px;">
-                                    <div class="profile-pic"
+                                <div style="display:flex; align-items:center; gap: 15px;">
+                                    <div
                                         style="width:40px; height:40px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
                                         PK</div>
                                     <div>
@@ -1135,58 +1157,30 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="draft-item"
-                                onclick="selectProfile('Rajesh Verma', 'Finance Officer', 'RV', this)">
-                                <div class="profile-list-item" style="display:flex; align-items:center; gap: 15px;">
-                                    <div class="profile-pic"
-                                        style="width:40px; height:40px; background: var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
-                                        RV</div>
-                                    <div>
-                                        <p style="font-weight: 700; font-size: 0.9rem;">Rajesh Verma</p>
-                                        <p style="font-size: 0.75rem; color: var(--text-dim);">Finance Officer</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="draft-item"
-                                onclick="selectProfile('Sita Iyer', 'Education Director', 'SI', this)">
-                                <div class="profile-list-item" style="display:flex; align-items:center; gap: 15px;">
-                                    <div class="profile-pic"
-                                        style="width:40px; height:40px; background: var(--warning); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
-                                        SI</div>
-                                    <div>
-                                        <p style="font-weight: 700; font-size: 0.9rem;">Sita Iyer</p>
-                                        <p style="font-size: 0.75rem; color: var(--text-dim);">Education Director</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Long Card: Selection Summary & Action -->
+                <!-- Selection Summary bar -->
                 <div class="glass-panel"
                     style="margin-top: 25px; display: flex; align-items: center; justify-content: space-between; padding: 30px;">
                     <div style="display: flex; gap: 40px; align-items: center;">
                         <div id="display-letter" style="border-left: 4px solid var(--accent); padding-left: 15px;">
-                            <p
-                                style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
-                                Selected
+                            <p style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Selected
                                 Letter</p>
                             <p id="selected-letter-text" style="font-weight: 700; color: var(--primary);">None selected
                             </p>
                         </div>
                         <i class="fas fa-arrow-right text-dim"></i>
                         <div id="display-profile" style="border-left: 4px solid var(--success); padding-left: 15px;">
-                            <p
-                                style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
-                                Recipient
+                            <p style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Recipient
                                 Profile</p>
                             <p id="selected-profile-text" style="font-weight: 700; color: var(--primary);">None selected
                             </p>
                         </div>
                     </div>
-                    <button class="btn-action" style="padding: 15px 40px; font-size: 1rem;" onclick="confirmForward()">
-                        <i class="fas fa-share-nodes"></i> &nbsp; Forward Letter Now
+                    <button class="btn-action" style="padding: 15px 40px;" onclick="confirmForward()">
+                        Forward Now
                     </button>
                 </div>
             </div>
@@ -1197,13 +1191,10 @@
                     onclick="showPage('dashboard-view')"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-                    <!-- Bar Chart for Letters -->
                     <div class="glass-panel">
                         <h3 class="section-title">Letters Received (Monthly)</h3>
                         <canvas id="lettersBarChart" height="200"></canvas>
                     </div>
-
-                    <!-- Line Chart (Letters & Complaints) -->
                     <div class="glass-panel">
                         <h3 class="section-title">Trend: Letters vs Complaints</h3>
                         <canvas id="trendLineChart" height="200"></canvas>
@@ -1211,16 +1202,13 @@
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px; margin-top: 25px;">
-                    <!-- Pie Chart for Solutions -->
                     <div class="glass-panel">
                         <h3 class="section-title">Solution Breakdown</h3>
                         <canvas id="solutionsPieChart" height="200"></canvas>
                     </div>
-
-                    <!-- Team Profiles (Glassy Cards) -->
                     <div class="glass-panel">
                         <h3 class="section-title">Active Team Profiles</h3>
-                        <div class="glass-profile-grid"
+                        <div
                             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                             <div class="glass-card">
                                 <div class="glass-avatar">AM</div>
@@ -1233,12 +1221,6 @@
                                 <p style="font-weight: 700;">Rajesh Verma</p>
                                 <p style="font-size: 0.75rem; color: var(--text-dim);">Finance Officer</p>
                             </div>
-                            <div class="glass-card">
-                                <div class="glass-avatar"
-                                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">PK</div>
-                                <p style="font-weight: 700;">Priya Kapoor</p>
-                                <p style="font-size: 0.75rem; color: var(--text-dim);">Head of Works</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1248,206 +1230,51 @@
     </div>
 
     <script>
-        // --- EXPANDED DATA CONTENT (WITH INDIAN NAMES & CURRENCY) ---
+        // --- 2. UPDATED DATA CONTENT ---
         const draftData = [
             {
-                summary: "This draft reply is formulated in response to the Ministry of Finance's inquiry regarding the projected budget shortfall for Q4 2024. \n\nIt specifically addresses: \n1. The unexpected rise in raw material costs for the Metro Phase 2 project (approx. 15% increase). \n2. The reallocation of funds from the 'Events & Marketing' sector to cover critical infrastructure repairs. \n3. A request for an emergency grant of ₹4 Crores to ensure project completion by the fiscal year-end. \n\nThe document includes attached ledgers from the Audit Department verifying these claims.",
-                body: "To: The Under Secretary, Ministry of Finance\nSubject: Clarification on Budget Allocation & Shortfall Projection (Ref: DRY-2024-1456)\n\nRespected Sir/Madam,\n\nWith reference to your letter dated 1st December 2024, asking for clarification regarding the projected deficit in the Public Works account, we submit the following details.\n\nOur primary focus for this fiscal quarter has been the accelerated completion of the Metro Phase 2 extension. However, due to market fluctuations, the cost of steel and cement has risen by approximately 15% since our initial budget filing in January. This has created an unforeseen gap of ₹2.5 Crores in our capital expenditure.\n\nTo mitigate this, the department has already diverted 20% of the non-essential marketing budget towards this project. Despite these internal adjustments, a shortfall remains. We strictly adhere to the fiscal responsibility guidelines and assure you that no funds have been misappropriated.\n\nWe kindly request you to review the attached audit report and consider our application for the supplementary grant.\n\nYours Faithfully,\nArjun Mehta\nAdministrator, Nexus Secretariat.",
-                ai: "\"I've analyzed the draft. It is strong, but I recommend a slight tone shift in the second paragraph. \n\nInstead of 'unforeseen gap', consider using 'market-driven cost variance' to sound more analytical. \n\nAdditionally, explicitly mentioning the 'State Public Works Manual, Section 4' in the final paragraph would strengthen your legal standing for the grant request. \n\nShall I apply these enhancements for you?\""
+                summary: "This draft reply is formulated in response to the Ministry of Finance's inquiry regarding the projected budget shortfall for Q4 2024. \n\nIt specifically addresses: \n1. The unexpected rise in raw material costs for the Metro Phase 2 project (approx. 15% increase). \n2. The reallocation of funds from the 'Events & Marketing' sector to cover critical infrastructure repairs. \n3. A request for an emergency grant of ₹4 Crores to ensure project completion by the fiscal year-end.",
+                body: "To: The Under Secretary, Ministry of Finance\nSubject: Clarification on Budget Allocation & Shortfall Projection (Ref: DRY-2024-1456)\n\nRespected Sir/Madam,\n\nWith reference to your letter dated 1st December 2024, asking for clarification regarding the projected deficit in the Public Works account, we submit the following details.\n\nOur primary focus for this fiscal quarter has been the accelerated completion of the Metro Phase 2 extension...",
+                ai: "\"I've analyzed the draft. It is strong, but I recommend a slight tone shift in the second paragraph. Instead of 'unforeseen gap', consider using 'market-driven cost variance' to sound more analytical.\""
             },
             {
-                summary: "This is a formal response to Citizen Complaint #CMP-2024-032 filed by Mrs. Kavita Reddy regarding the deteriorating condition of Main Street. \n\nThe summary validates the citizen's concern, confirming that inspection team 'Alpha-1' visited the site on Dec 6th. \n\nIt identifies the root cause as 'heavy rain damage' combined with 'contractor delay'. It outlines the immediate deployment of a repair crew and provides a transparent timeline for fix completion, along with a direct tracking number for the citizen.",
-                body: "Dear Mrs. Kavita Reddy,\n\nThank you for reaching out to the Nexus Office Management System regarding the infrastructure issues on M.G. Road (Ref: CMP-2024-032).\n\nWe sincerely apologize for the inconvenience caused to you and the local residents. Following your complaint, we dispatched our Quality Control Officer, Mr. Suresh Patil, to inspect the location yesterday. His report confirms significant pothole formation due to the recent unseasonal rains.\n\nWe have issued an urgent work order to our contractor, 'Omkar Infrastructure Ltd', under Work Order #889. The repair work is scheduled to commence tomorrow morning, December 8th, and is expected to be completed within 48 hours, barring severe weather conditions.\n\nYou can track the live status of this repair using the Ticket ID: RPR-9982 on our public portal. Thank you for being a vigilant citizen.\n\nRegards,\nPublic Grievance Cell.",
-                ai: "\"The empathy in the opening is excellent. \n\nHowever, to prevent further follow-ups, I suggest adding a sentence about the 'Defect Liability Period' of the repair work. \n\nFor example: 'Please note that these repairs come with a 6-month guarantee period.' \n\nThis adds a layer of assurance and professionalism to the response.\""
+                summary: "This is a formal response to Citizen Complaint #CMP-2024-032 filed by Mrs. Kavita Reddy regarding the deteriorating condition of Main Street. \n\nThe summary validates the citizen's concern, confirming that inspection team 'Alpha-1' visited the site on Dec 6th.",
+                body: "Dear Mrs. Kavita Reddy,\n\nThank you for reaching out to the Nexus Office Management System regarding the infrastructure issues on M.G. Road (Ref: CMP-2024-032).\n\nWe sincerely apologize for the inconvenience caused to you and the local residents...",
+                ai: "\"The empathy in the opening is excellent. However, to prevent further follow-ups, I suggest adding a sentence about the 'Defect Liability Period' of the repair work.\""
             },
             {
-                summary: "This draft serves as the internal cover letter for the 'Annual Departmental Performance Report 2024'. \n\nIt summarizes key victories: \n1. A 12% increase in case resolution speed due to the new AI integration. \n2. A 5% reduction in operational costs (saving ₹85 Lakhs annually). \n3. High employee satisfaction scores (4.8/5). \n\nIt seeks final approval from the Director before the report is published to the public domain and shared with the Municipal Corporation.",
-                body: "Memorandum\nTo: The Director of Operations\nFrom: Administrative Desk\nDate: December 7, 2024\nSubject: Approval for Annual Performance Report 2024 (Ref: DRY-2024-1450)\n\nPlease find attached the finalized draft of the Annual Report for the fiscal year 2024. The data reveals a highly successful year for the department.\n\nKey Highlights for the Executive Summary:\n1. Operational Efficiency: The implementation of the Nexus System has reduced average file processing time from 3 days to 1.2 days.\n2. Financial Health: We have achieved a surplus of 5% in the administrative budget through rigorous vendor renegotiation.\n3. Human Resources: Employee retention is at an all-time high of 98%.\n\nWe request your signature on Page 4 to authorize the release of this document to the Municipal Corporation by Monday.\n\nRegards,\nArjun Mehta.",
-                ai: "\"The draft is concise and data-driven. \n\nHowever, I noticed you didn't highlight the 'Digital India Initiative' metrics (paperless workflow savings). \n\nIncluding that data point would align perfectly with the Central Government's new mandates. \n\nI can insert a bullet point about 'Saving 50,000 sheets of paper' if you wish.\""
+                summary: "This draft serves as the internal cover letter for the 'Annual Departmental Performance Report 2024'.",
+                body: "Memorandum\nTo: The Director of Operations\nSubject: Approval for Annual Performance Report 2024 (Ref: DRY-2024-1450)\n\nPlease find attached the finalized draft of the Annual Report for the fiscal year 2024...",
+                ai: "\"The draft is concise and data-driven. However, I noticed you didn't highlight the 'Digital India Initiative' metrics.\""
             }
         ];
 
+        // --- 3. SIDEBAR PERSISTENCE LOGIC ---
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
+            const sidebar = document.getElementById('sidebar');
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+
+            // Save state to browser storage
+            localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
         }
 
-        // --- FIXED showPage LOGIC (PRESERVES ALL CONTENT) ---
-        function showPage(pageId) {
-            const pages = document.querySelectorAll('.page-view');
-            pages.forEach(page => page.classList.remove('active'));
-
-            const targetPage = document.getElementById(pageId);
-            if (targetPage) targetPage.classList.add('active');
-
-            const links = document.querySelectorAll('.sidebar-menu a');
-            links.forEach(link => link.classList.remove('active'));
-
-            // The Dashboard sub-pages (those opened from quick actions)
-            // This ensures Dashboard link stays active for all internal pages
-            const dashboardSectionPages = [
-                'dashboard-view', 
-                'letters-view', 
-                'complaints-view', 
-                'drafts-view', 
-                'forward-view', 
-                'reports-view'
-            ];
-
-            if (dashboardSectionPages.includes(pageId)) {
-                links[0].classList.add('active'); // Highlight Dashboard
+        // Apply saved state on load
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedState = localStorage.getItem('sidebarState');
+            if (savedState === 'collapsed') {
+                document.getElementById('sidebar').classList.add('collapsed');
             }
 
-            // Clear search when changing pages
-            document.getElementById('mainSearch').value = "";
-            filterContent();
+            // Remove the temporary "pre-load" style
+            const tempStyles = document.getElementById('temp-sidebar-styles');
+            if (tempStyles) tempStyles.remove();
 
-            if (pageId === 'drafts-view') {
-                // Automatically load the first draft when navigating to Drafts view
-                const firstDraftItem = document.querySelector('#drafts-view .draft-item');
-                if (firstDraftItem) {
-                    loadDraft(0, firstDraftItem);
-                }
-            }
-            else if (pageId === 'reports-view') {
+            // Run chart logic if starting on reports (optional)
+            if (document.getElementById('reports-view').classList.contains('active')) {
                 initCharts();
             }
-        }
 
-        function filterContent() {
-            const input = document.getElementById('mainSearch');
-            const filter = input.value.toLowerCase();
-            const activePage = document.querySelector('.page-view.active');
-            if(!activePage) return;
-
-            const rows = activePage.querySelectorAll('.table-custom tbody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(filter) ? '' : 'none';
-            });
-
-            const listItems = activePage.querySelectorAll('.draft-item');
-            listItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(filter) ? '' : 'none';
-            });
-
-            const quickBtns = activePage.querySelectorAll('.q-btn');
-            quickBtns.forEach(btn => {
-                const text = btn.textContent.toLowerCase();
-                btn.style.display = text.includes(filter) ? '' : 'none';
-            });
-        }
-
-        function initCharts() {
-            // Check if chart already exists to prevent duplicate canvas error
-            if (Chart.getChart("lettersBarChart")) Chart.getChart("lettersBarChart").destroy();
-            if (Chart.getChart("trendLineChart")) Chart.getChart("trendLineChart").destroy();
-            if (Chart.getChart("solutionsPieChart")) Chart.getChart("solutionsPieChart").destroy();
-
-            new Chart(document.getElementById('lettersBarChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'],
-                    datasets: [{
-                        label: 'Letters',
-                        data: [450, 520, 480, 610, 590, 720],
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 5
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
-
-            new Chart(document.getElementById('trendLineChart'), {
-                type: 'line',
-                data: {
-                    labels: ['W1', 'W2', 'W3', 'W4', 'W5'],
-                    datasets: [{
-                        label: 'Letters',
-                        data: [15, 30, 25, 45, 60],
-                        borderColor: '#3b82f6',
-                        tension: 0.4
-                    }, {
-                        label: 'Complaints',
-                        data: [5, 10, 8, 15, 20],
-                        borderColor: '#ef4444',
-                        tension: 0.4
-                    }]
-                }
-            });
-
-            new Chart(document.getElementById('solutionsPieChart'), {
-                type: 'pie',
-                data: {
-                    labels: ['Resolved', 'In Progress', 'Pending'],
-                    datasets: [{
-                        data: [65, 20, 15],
-                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
-                    }]
-                }
-            });
-        }
-
-        // --- TYPEWRITER EFFECT LOGIC ---
-        let aiTypingTimeout; 
-
-        function typeText(element, text, index = 0) {
-            if (index === 0) element.innerHTML = "";
-
-            if (index < text.length) {
-                let char = text.charAt(index);
-                if (char === '\n') {
-                    element.innerHTML += '<br>';
-                } else {
-                    element.innerHTML += char;
-                }
-                const randomSpeed = Math.floor(Math.random() * 20) + 10;
-                aiTypingTimeout = setTimeout(() => typeText(element, text, index + 1), randomSpeed);
-            }
-        }
-
-        function loadDraft(index, element) {
-            document.querySelectorAll('#drafts-view .draft-item').forEach(item => item.classList.remove('active'));
-            element.classList.add('active');
-
-            document.getElementById('draft-summary').innerText = draftData[index].summary;
-            document.getElementById('draft-body').innerText = draftData[index].body;
-
-            clearTimeout(aiTypingTimeout);
-            const aiBox = document.getElementById('ai-suggestion');
-            typeText(aiBox, draftData[index].ai);
-        }
-
-        // FORWARD PAGE LOGIC
-        let currentSelectedLetter = "";
-        let currentSelectedProfile = "";
-
-        function selectLetter(id, subject, element) {
-            const container = element.parentElement;
-            container.querySelectorAll('.draft-item').forEach(item => item.classList.remove('active'));
-            element.classList.add('active');
-            currentSelectedLetter = `${id}: ${subject}`;
-            document.getElementById('selected-letter-text').innerText = currentSelectedLetter;
-        }
-
-        function selectProfile(name, role, initials, element) {
-            const container = element.parentElement;
-            container.querySelectorAll('.draft-item').forEach(item => item.classList.remove('active'));
-            element.classList.add('active');
-            currentSelectedProfile = `${name} (${role})`;
-            document.getElementById('selected-profile-text').innerText = currentSelectedProfile;
-        }
-
-        function confirmForward() {
-            if (!currentSelectedLetter || !currentSelectedProfile) {
-                alert("Please select both a letter and a profile to forward.");
-                return;
-            }
-            alert(`Letter "${currentSelectedLetter}" successfully forwarded to ${currentSelectedProfile}`);
-            showPage('dashboard-view');
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
+            // Animations observer
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -1461,6 +1288,110 @@
                 observer.observe(el);
             });
         });
+
+        // --- 4. ORIGINAL FUNCTIONALITY (Navigation, Search, Typing) ---
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page-view');
+            pages.forEach(page => page.classList.remove('active'));
+
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) targetPage.classList.add('active');
+
+            const links = document.querySelectorAll('.sidebar-menu a');
+            links.forEach(link => link.classList.remove('active'));
+
+            const dashboardSectionPages = ['dashboard-view', 'letters-view', 'complaints-view', 'drafts-view', 'forward-view', 'reports-view'];
+            if (dashboardSectionPages.includes(pageId)) links[0].classList.add('active');
+
+            if (pageId === 'drafts-view') {
+                loadDraft(0, document.querySelector('#drafts-view .draft-item'));
+            } else if (pageId === 'reports-view') {
+                initCharts();
+            }
+        }
+
+        function filterContent() {
+            const filter = document.getElementById('mainSearch').value.toLowerCase();
+            const activePage = document.querySelector('.page-view.active');
+            if (!activePage) return;
+
+            activePage.querySelectorAll('.table-custom tbody tr, .draft-item, .q-btn').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(filter) ? '' : 'none';
+            });
+        }
+
+        function initCharts() {
+            if (Chart.getChart("lettersBarChart")) Chart.getChart("lettersBarChart").destroy();
+            new Chart(document.getElementById('lettersBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{ label: 'Letters', data: [450, 520, 480, 610, 590, 720], backgroundColor: '#3b82f6' }]
+                }
+            });
+
+            if (Chart.getChart("trendLineChart")) Chart.getChart("trendLineChart").destroy();
+            new Chart(document.getElementById('trendLineChart'), {
+                type: 'line',
+                data: {
+                    labels: ['W1', 'W2', 'W3', 'W4'],
+                    datasets: [{ label: 'Letters', data: [15, 30, 25, 45], borderColor: '#3b82f6' }]
+                }
+            });
+
+            if (Chart.getChart("solutionsPieChart")) Chart.getChart("solutionsPieChart").destroy();
+            new Chart(document.getElementById('solutionsPieChart'), {
+                type: 'pie',
+                data: { labels: ['Resolved', 'In Progress'], datasets: [{ data: [65, 35], backgroundColor: ['#10b981', '#f59e0b'] }] }
+            });
+        }
+
+        let aiTypingTimeout;
+        function typeText(element, text, index = 0) {
+            if (index === 0) element.innerHTML = "";
+            if (index < text.length) {
+                let char = text.charAt(index);
+                element.innerHTML += (char === '\n' ? '<br>' : char);
+                aiTypingTimeout = setTimeout(() => typeText(element, text, index + 1), 20);
+            }
+        }
+
+        function loadDraft(index, element) {
+            document.querySelectorAll('#drafts-view .draft-item').forEach(i => i.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            document.getElementById('draft-summary').innerText = draftData[index].summary;
+            document.getElementById('draft-body').innerText = draftData[index].body;
+
+            clearTimeout(aiTypingTimeout);
+            typeText(document.getElementById('ai-suggestion'), draftData[index].ai);
+        }
+
+        let currentSelectedLetter = "";
+        let currentSelectedProfile = "";
+
+        function selectLetter(id, subject, element) {
+            element.parentElement.querySelectorAll('.draft-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+            currentSelectedLetter = id + ": " + subject;
+            document.getElementById('selected-letter-text').innerText = currentSelectedLetter;
+        }
+
+        function selectProfile(name, role, initials, element) {
+            element.parentElement.querySelectorAll('.draft-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+            currentSelectedProfile = name + " (" + role + ")";
+            document.getElementById('selected-profile-text').innerText = currentSelectedProfile;
+        }
+
+        function confirmForward() {
+            if (!currentSelectedLetter || !currentSelectedProfile) {
+                alert("Please select both a letter and a profile.");
+                return;
+            }
+            alert(`Letter forwarded to ${currentSelectedProfile}`);
+            showPage('dashboard-view');
+        }
     </script>
 </body>
 

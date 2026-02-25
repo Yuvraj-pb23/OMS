@@ -6,6 +6,7 @@ urlpatterns = [
     path('inbox/', views.inbox, name='inbox'),
     path('Document Repository/', views.Document_Repository, name='Document Repository'),
     path('Analytics & Reporting/', views.Analytics_Reporting, name='Analytics & Reporting'),
+    path('setting/', views.setting, name='setting'),
 
     
 ]

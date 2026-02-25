@@ -9,11 +9,16 @@ def index(request):
 def inbox(request):
     return render(request, 'inbox.html')
 
+
+
 def Document_Repository(request):
     return render(request, 'Document Repository.html', {'active_tab': 'Document Repository'})
 
 def Analytics_Reporting(request):
     return render(request, 'Analytics & Reporting.html', {'active_tab': 'Analytics & Reporting'})
+
+def setting(request):
+    return render(request, 'setting.html')
 
 def dashboard(request):
     context = {
