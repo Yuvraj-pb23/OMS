@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}Register Complaint — CCPCR OMS{% endblock %}
+{% block header_title %}Register Complaint{% endblock %}
+
+{% block content %}
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animated-wrapper {
+    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .form-card-red {
+    background: linear-gradient(145deg, rgba(254, 242, 242, 0.9) 0%, rgba(254, 226, 226, 0.7) 100%);
+    border: 1.5px solid rgba(220, 38, 38, 0.2);
+    box-shadow: 0 4px 24px -4px rgba(220, 38, 38, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .form-card-red:hover {
+    box-shadow: 0 8px 32px -6px rgba(220, 38, 38, 0.12);
+  }
+
+  .form-card-red .form-group input,
+  .form-card-red .form-group select,
+  .form-card-red .form-group textarea {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(220, 38, 38, 0.15);
+  }
+
+  .form-card-red .form-group input:focus,
+  .form-card-red .form-group select:focus,
+  .form-card-red .form-group textarea:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+  }
+</style>
+
+<div class="card animated-wrapper form-card-red" style="margin-bottom: 24px;">
+  <div class="section-header"
+    style="border-bottom: 1.5px solid rgba(220, 38, 38, 0.12); padding-bottom: 16px; margin-bottom: 24px;">
+    <div>
+      <h3 class="section-title" style="font-size: 1.3rem; color: #991b1b;">
+        <i class="fas fa-exclamation-triangle" style="color: #dc2626; margin-right: 8px;"></i>New
+        Complaint Registration
+      </h3>
+      <p class="section-subtitle" style="color: #64748b; margin-top: 4px;">Register a citizen complaint for tracking and
+        resolution</p>
+    </div>
+  </div>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="id_citizen_name">Citizen Name *</label>
+        <input type="text" id="id_citizen_name" name="citizen_name" value="{{ form.citizen_name.value|default:'' }}"
+          placeholder="Full name of complainant" required>
+        {{ form.citizen_name.errors }}
+      </div>
+      <div class="form-group">
+        <label for="id_subject">Subject *</label>
+        <input type="text" id="id_subject" name="subject" value="{{ form.subject.value|default:'' }}"
+          placeholder="Brief complaint subject" required>
+        {{ form.subject.errors }}
+      </div>
+      <div class="form-group">
+        <label for="id_citizen_contact">Contact Info</label>
+        <input type="text" id="id_citizen_contact" name="citizen_contact"
+          value="{{ form.citizen_contact.value|default:'' }}" placeholder="Phone or email">
+      </div>
+      <div class="form-group">
+        <label for="id_filed_against">Filed Against (Optional)</label>
+        <input type="text" id="id_filed_against" name="filed_against" value="{{ form.filed_against.value|default:'' }}"
+          placeholder="Who is the complaint against?">
+      </div>
+      <div class="form-group">
+        <label for="id_date_filed">Date Filed *</label>
+        <input type="date" id="id_date_filed" name="date_filed" value="{{ form.date_filed.value|default:'' }}" required>
+      </div>
+      <div class="form-group">
+        <label for="id_category">Category *</label>
+        {{ form.category }}
+      </div>
+      <div class="form-group">
+        <label for="id_priority">Priority</label>
+        {{ form.priority }}
+      </div>
+      <div class="form-group">
+        <label for="id_victim_age">Victim Age</label>
+        <input type="number" id="id_victim_age" name="victim_age" value="{{ form.victim_age.value|default:'' }}"
+          placeholder="Age (optional)" min="0" max="18">
+      </div>
+      <div class="form-group">
+        <label for="id_victim_gender">Victim Gender</label>
+        {{ form.victim_gender }}
+      </div>
+      <div class="form-group full">
+        <label for="id_description">Description</label>
+        <textarea id="id_description" name="description"
+          placeholder="Detailed description...">{{ form.description.value|default:'' }}</textarea>
+      </div>
+    </div>
+    <div style="margin-top: 20px;">
+      <button type="submit" class="btn btn-danger"><i class="fas fa-plus-circle"></i> Register Complaint</button>
+    </div>
+  </form>
+</div>
+
+<!-- <div class="card">
+  <div class="section-header">
+    <div>
+      <h3 class="section-title"><i class="fas fa-list-ul" style="color: var(--accent);"></i> Recently Registered
+        Complaints
+      </h3>
+      <p class="section-subtitle">Last {{ complaints|length }} record{{ complaints|length|pluralize }}</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ref No</th>
+          <th>Citizen</th>
+          <th>Category</th>
+          <th>Filed</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr>
+          <td style="font-weight: 600; color: var(--danger);">{{ c.master.ref_no }}</td>
+          <td>{{ c.master.sender_name }}</td>
+          <td>{{ c.category }}</td>
+          <td>{{ c.master.received_date }}</td>
+          <td>
+            <div class="badge badge-{{ c.master.status|lower }}">{{ c.master.status }}</div>
+          </td>
+          <td>
+            <div class="badge badge-{{ c.master.priority|lower }}">{{ c.master.priority }}</div>
+          </td>
+          <td>
+            <a href="{% url 'record_detail' c.master.pk %}" class="btn"
+              style="padding: 4px 10px; font-size: 0.7rem; background: rgba(16,185,129,0.1); color: var(--success); border: 1px solid rgba(16,185,129,0.2);"><i
+                class="fas fa-eye"></i> View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <p>No complaints registered yet</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div> -->
+{% endblock %}

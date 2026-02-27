@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+{% block title %}Replies Received — CCPCR OMS{% endblock %}
+{% block header_title %}Replies Received{% endblock %}
+
+{% block extra_css %}
+<style>
+  .replies-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .section-divider {
+    margin: 32px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .section-divider .divider-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .section-divider .divider-icon.blue {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+  }
+
+  .section-divider .divider-icon.red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+
+  .section-divider .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .reply-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .reply-card:hover {
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+
+  .reply-card.expanded {
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08);
+  }
+
+  /* Unread styling */
+  .reply-card.unread-row {
+    background: #f8fafc;
+  }
+
+  .reply-card.unread-row .card-subject {
+    font-weight: 700;
+  }
+
+
+  .reply-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    gap: 16px;
+  }
+
+  .reply-card-header:hover {
+    background: rgba(59, 130, 246, 0.04);
+  }
+
+  .reply-card-header .card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-ref {
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .card-ref.letter {
+    color: #60a5fa;
+  }
+
+  .card-ref.complaint {
+    color: #f87171;
+  }
+
+  .card-subject {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+  }
+
+  .card-sender {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .reply-count-badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .chevron {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+  }
+
+  .expanded .chevron {
+    transform: rotate(180deg);
+  }
+
+  .reply-card-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .reply-card-body-inner {
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .reply-thread-item {
+    padding: 14px 16px;
+    background: var(--bg-input);
+    border-radius: 10px;
+    margin-top: 12px;
+    border-left: 3px solid var(--success);
+    animation: fadeSlideIn 0.3s ease;
+  }
+
+  .reply-thread-item .reply-author {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .reply-thread-item .reply-author-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .reply-thread-item .reply-author-name .dept-badge {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .reply-thread-item .reply-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .reply-thread-item .reply-content {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .no-replies-box {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .no-replies-box i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.35;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Summary stats -->
+<div class="replies-stats">
+  <div class="stat-card blue">
+    <div class="stat-label">Replied Letters</div>
+    <div class="stat-value">{{ letter_count }}</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">Replied Complaints</div>
+    <div class="stat-value">{{ complaint_count }}</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Total Replies</div>
+    <div class="stat-value">{{ letter_count|add:complaint_count }}</div>
+  </div>
+</div>
+
+<!-- ─── Letters Replies Section ─── -->
+<div class="section-divider">
+  <div class="divider-icon blue"><i class="fas fa-envelope"></i></div>
+  <div>
+    <div style="font-weight: 700; font-size: 1rem;">Letter Replies</div>
+    <div style="font-size: 0.78rem; color: var(--text-muted);">Department responses to forwarded letters</div>
+  </div>
+  <div class="divider-line"></div>
+</div>
+
+{% if replied_letters %}
+{% for record in replied_letters %}
+<div class="reply-card {% if record.has_unread %}unread-row{% endif %}">
+  <div class="reply-card-header" style="cursor: default;">
+    <div class="card-left">
+      <span class="card-ref letter">{{ record.ref_no }}</span>
+      <span class="card-subject">{{ record.subject|truncatewords:10 }}</span>
+      <span class="badge" style="background: rgba(59,130,246,0.1); color: var(--accent);">Letter</span>
+    </div>
+    <div class="card-meta">
+      <div class="badge badge-{{ record.status|lower }}">{{ record.status }}</div>
+      <div class="reply-count-badge"><i class="fas fa-comments"></i> {{ record.reply_count }} replies</div>
+
+      <!-- Mark Read/Unread Toggle Button -->
+      <button class="btn"
+        onclick="toggleReadStatus({{ record.pk }}, {% if record.has_unread %}false{% else %}true{% endif %})"
+        title="Mark as {% if record.has_unread %}read{% else %}unread{% endif %}"
+        style="padding: 6px 10px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer;">
+        <i class="fas {% if record.has_unread %}fa-envelope{% else %}fa-envelope-open{% endif %}"></i>
+      </button>
+
+      <a href="{% url 'reply_detail' record.pk %}" class="btn"
+        style="padding: 6px 12px; font-size: 0.75rem; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); white-space: nowrap;">
+        <i class="fas fa-eye"></i> View
+      </a>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="no-replies-box">
+  <div><i class="fas fa-envelope-open"></i></div>
+  <p>No letter replies received yet</p>
+</div>
+{% endif %}
+
+<!-- ─── Complaints Replies Section ─── -->
+<div class="section-divider" style="margin-top: 40px;">
+  <div class="divider-icon red"><i class="fas fa-exclamation-circle"></i></div>
+  <div>
+    <div style="font-weight: 700; font-size: 1rem;">Complaint Replies</div>
+    <div style="font-size: 0.78rem; color: var(--text-muted);">Department responses to forwarded complaints</div>
+  </div>
+  <div class="divider-line"></div>
+</div>
+
+{% if replied_complaints %}
+{% for record in replied_complaints %}
+<div class="reply-card {% if record.has_unread %}unread-row{% endif %}">
+  <div class="reply-card-header" style="cursor: default;">
+    <div class="card-left">
+      <span class="card-ref complaint">{{ record.ref_no }}</span>
+      <span class="card-subject">{{ record.subject|truncatewords:10 }}</span>
+      <span class="badge" style="background: rgba(239,68,68,0.1); color: var(--danger);">Complaint</span>
+    </div>
+    <div class="card-meta">
+      <div class="badge badge-{{ record.status|lower }}">{{ record.status }}</div>
+      <div class="reply-count-badge"><i class="fas fa-comments"></i> {{ record.reply_count }} replies</div>
+
+      <!-- Mark Read/Unread Toggle Button -->
+      <button class="btn"
+        onclick="toggleReadStatus({{ record.pk }}, {% if record.has_unread %}false{% else %}true{% endif %})"
+        title="Mark as {% if record.has_unread %}read{% else %}unread{% endif %}"
+        style="padding: 6px 10px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer;">
+        <i class="fas {% if record.has_unread %}fa-envelope{% else %}fa-envelope-open{% endif %}"></i>
+      </button>
+
+      <a href="{% url 'reply_detail' record.pk %}" class="btn"
+        style="padding: 6px 12px; font-size: 0.75rem; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); white-space: nowrap;">
+        <i class="fas fa-eye"></i> View
+      </a>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="no-replies-box">
+  <div><i class="fas fa-exclamation-circle"></i></div>
+  <p>No complaint replies received yet</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function toggleReadStatus(pk, currentStatus) {
+    const newStatus = !currentStatus;
+    fetch(`/reply/${pk}/toggle-read/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ is_read: newStatus })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Reload to update the UI
+          location.reload();
+        } else {
+          alert('Error updating read status: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred.');
+      });
+  }
+</script>
+{% endblock %}

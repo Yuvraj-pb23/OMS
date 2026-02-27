@@ -127,3 +127,23 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Auth
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+
+# ──────────────────────────────────────────────
+# EMAIL CONFIGURATION (Google SMTP)
+# ──────────────────────────────────────────────
+# Important: To use Gmail SMTP, you must enable 2-Step Verification on the Google Account,
+# and generate an "App Password". Use that 16-character password below.
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# TODO: Replace these with your actual Gmail address and App Password
+EMAIL_HOST_USER = 'your-email@gmail.com' 
+EMAIL_HOST_PASSWORD = 'your-16-digit-app-password'
+DEFAULT_FROM_EMAIL = 'CCPCR OMS <your-email@gmail.com>'

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Reply — {{ record.ref_no }} — CCPCR OMS{% endblock %}
+{% block header_title %}Reply Details{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dept-badge {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Record Summary -->
+<div class="card" style="margin-bottom: 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <h3 class="card-title" style="margin: 0;">
+        {% if record.record_type == 'LETTER' %}
+        <i class="fas fa-envelope" style="color: var(--accent);"></i>
+        {% else %}
+        <i class="fas fa-exclamation-circle" style="color: var(--danger);"></i>
+        {% endif %}
+        {{ record.ref_no }}
+      </h3>
+      <div class="badge badge-{{ record.status|lower }}">{{ record.status }}</div>
+    </div>
+    <a href="{% url 'replies_received' %}" class="btn"
+      style="padding: 5px 12px; font-size: 0.75rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px;">
+    <div>
+      <span
+        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Subject</span>
+      <div style="font-weight: 500; font-size: 0.92rem; margin-top: 2px;">{{ record.subject }}</div>
+    </div>
+    <div>
+      <span
+        style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Sender</span>
+      <div style="font-size: 0.92rem; margin-top: 2px;">{{ record.sender_name }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Forwarding Chain -->
+{% if forwards %}
+<div class="card" style="margin-bottom: 20px;">
+  <h3 class="card-title" style="font-size: 0.95rem;">
+    <i class="fas fa-route" style="color: var(--warning);"></i> Forwarding Chain
+  </h3>
+  {% for f in forwards %}
+  <div
+    style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-input); border-radius: 9px; margin-bottom: 8px; border-left: 3px solid var(--warning);">
+    <i class="fas fa-arrow-right" style="color: #fbbf24; font-size: 0.7rem;"></i>
+    <span style="font-weight: 600; font-size: 0.88rem;">{{ f.forwarded_to.name }}</span>
+    <span style="color: var(--text-muted); font-size: 0.78rem;">by {{ f.forwarded_by_display }}</span>
+    <span style="margin-left: auto; font-size: 0.72rem; color: var(--text-muted);">{{ f.forwarded_at|timesince }}
+      ago</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Replies -->
+<div class="card">
+  <h3 class="card-title" style="font-size: 0.95rem;">
+    <i class="fas fa-comments" style="color: var(--success);"></i> Replies
+  </h3>
+  {% for r in replies %}
+  <div
+    style="padding: 14px 16px; background: var(--bg-input); border-radius: 10px; margin-bottom: 10px; border-left: 3px solid var(--success);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 600; font-size: 0.88rem;">{{ r.get_replied_by_name }}</span>
+        {% if r.get_department_name %}
+        <span class="dept-badge">{{ r.get_department_name }}</span>
+        {% endif %}
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">{{ r.created_at|timesince }} ago</span>
+    </div>
+    <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65;">{{ r.content }}</div>
+  </div>
+  {% empty %}
+  <div class="empty-state" style="padding: 24px;">
+    <i class="fas fa-comments" style="font-size: 1.3rem;"></i>
+    <p style="margin-top: 6px;">No replies yet</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

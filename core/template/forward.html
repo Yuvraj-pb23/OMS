@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Forward — CCPCR OMS{% endblock %}
+{% block header_title %}Forward Record{% endblock %}
+
+{% block content %}
+<!-- Record Details -->
+<div class="card" style="margin-bottom: 24px;">
+  <h3 class="card-title"><i class="fas fa-file-alt" style="color: var(--accent);"></i> Record Details</h3>
+  <div class="grid-2">
+    <div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Reference</span>
+        <div style="font-weight: 700; color: var(--accent);">{{ record.ref_no }}</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Subject</span>
+        <div style="font-weight: 600;">{{ record.subject }}</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sender</span>
+        <div>{{ record.sender_name }}</div>
+      </div>
+    </div>
+    <div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Type</span>
+        <div>{{ record.get_record_type_display }}</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Status</span>
+        <div><span class="badge badge-{{ record.status|lower }}">{{ record.get_status_display }}</span></div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Priority</span>
+        <div><span class="badge badge-{{ record.priority|lower }}">{{ record.get_priority_display }}</span></div>
+      </div>
+    </div>
+  </div>
+  {% if record.description %}
+  <div
+    style="margin-top: 12px; padding: 14px; background: var(--bg-input); border-radius: 10px; font-size: 0.88rem; color: var(--text-secondary);">
+    {{ record.description }}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Forward Form -->
+<div class="card">
+  <h3 class="card-title"><i class="fas fa-share" style="color: var(--warning);"></i> Forward To</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="department">Department *</label>
+        <select name="department" id="department" required>
+          <option value="">-- Select Department --</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}">{{ dept.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="officer">Assign Officer (optional)</label>
+        <select name="officer" id="officer">
+          <option value="">-- Auto Assign --</option>
+          {% for o in officers %}
+          <option value="{{ o.id }}">{{ o.user.get_full_name }} ({{ o.department }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group full">
+        <label for="notes">Forwarding Notes</label>
+        <textarea name="notes" id="notes"
+          placeholder="Instructions or remarks for the receiving department..."></textarea>
+      </div>
+    </div>
+    <div style="margin-top: 20px; display: flex; gap: 12px;">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Forward</button>
+      <a href="javascript:history.back()" class="btn"
+        style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

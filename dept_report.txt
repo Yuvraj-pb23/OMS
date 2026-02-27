@@ -1,0 +1,46 @@
+=== ALL DEPARTMENTS ===
+  ID=4, Name=Child Welfare Committee
+  ID=3, Name=Counseling Unit
+  ID=6, Name=Education Wing
+  ID=7, Name=Health Wing
+  ID=2, Name=Investigation Cell
+  ID=5, Name=Juvenile Justice Board
+  ID=1, Name=Legal Department
+
+=== ALL STAFF PROFILES ===
+  User=arjun, Role=DEPT_USER, Dept=Legal Department
+  User=priya, Role=DEPT_USER, Dept=Investigation Cell
+  User=rajesh, Role=DEPT_USER, Dept=Legal Department
+  User=sita, Role=DEPT_USER, Dept=Education Wing
+  User=admin, Role=ADMIN, Dept=NO DEPARTMENT
+  User=rahul_legal, Role=DEPT_USER, Dept=Education Wing
+  User=divya_legal, Role=DEPT_USER, Dept=Health Wing
+
+=== ALL REPLIES ===
+  Reply ID=5, Master=22
+    user: rahul_legal
+    department obj: Education Wing
+    department.name: Education Wing
+    get_department_name: 'Education Wing'
+  Reply ID=4, Master=21
+    user: divya_legal
+    department obj: Health Wing
+    department.name: Health Wing
+    get_department_name: 'Health Wing'
+  Reply ID=3, Master=17
+    user: divya_legal
+    department obj: Health Wing
+    department.name: Health Wing
+    get_department_name: 'Health Wing'
+  Reply ID=2, Master=15
+    user: rahul_legal
+    department obj: Education Wing
+    department.name: Education Wing
+    get_department_name: 'Education Wing'
+  Reply ID=1, Master=14
+    user: rahul_legal
+    department obj: Education Wing
+    department.name: Education Wing
+    get_department_name: 'Education Wing'
+
+DONE

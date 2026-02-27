@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Reply — CCPCR OMS{% endblock %}
+{% block header_title %}Reply to {{ record.ref_no }}{% endblock %}
+
+{% block content %}
+<!-- Record Details -->
+<div class="card" style="margin-bottom: 24px;">
+  <h3 class="card-title"><i class="fas fa-file-alt" style="color: var(--accent);"></i> Record Details</h3>
+  <div class="grid-2">
+    <div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Reference</span>
+        <div style="font-weight: 700; color: var(--accent);">{{ record.ref_no }}</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Subject</span>
+        <div style="font-weight: 600;">{{ record.subject }}</div>
+      </div>
+    </div>
+    <div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sender</span>
+        <div>{{ record.sender_name }}</div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Status</span>
+        <div><span class="badge badge-{{ record.status|lower }}">{{ record.get_status_display }}</span></div>
+      </div>
+    </div>
+  </div>
+  {% if record.description %}
+  <div
+    style="margin-top: 12px; padding: 14px; background: var(--bg-input); border-radius: 10px; font-size: 0.88rem; color: var(--text-secondary);">
+    {{ record.description }}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Forward History -->
+{% if forwards %}
+<div class="card" style="margin-bottom: 24px;">
+  <h3 class="card-title"><i class="fas fa-route" style="color: var(--warning);"></i> Forwarding History</h3>
+  {% for f in forwards %}
+  <div
+    style="padding: 12px 16px; background: var(--bg-input); border-radius: 10px; margin-bottom: 8px; border-left: 3px solid var(--accent);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span style="font-weight: 600;">{{ f.forwarded_to.name }}</span>
+        {% if f.forwarded_by %}
+        <span style="color: var(--text-muted); font-size: 0.82rem;"> — by {{ f.forwarded_by.user.get_full_name }}</span>
+        {% endif %}
+      </div>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">{{ f.forwarded_at|timesince }} ago</span>
+    </div>
+    {% if f.notes %}
+    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">{{ f.notes }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Existing Replies -->
+{% if existing_replies %}
+<div class="card" style="margin-bottom: 24px;">
+  <h3 class="card-title"><i class="fas fa-comments" style="color: var(--success);"></i> Previous Replies</h3>
+  {% for r in existing_replies %}
+  <div
+    style="padding: 12px 16px; background: var(--bg-input); border-radius: 10px; margin-bottom: 8px; border-left: 3px solid var(--success);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: 600;">{{ r.replied_by.user.get_full_name }}</span>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">{{ r.created_at|timesince }} ago</span>
+    </div>
+    <div style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 8px;">{{ r.content }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Reply Form -->
+<div class="card">
+  <h3 class="card-title"><i class="fas fa-reply" style="color: var(--success);"></i> Submit Reply</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="content">Your Reply / Action Taken *</label>
+      <textarea name="content" id="content" required placeholder="Describe the action taken or your response..."
+        style="min-height: 150px;"></textarea>
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 12px;">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Reply</button>
+      <a href="javascript:history.back()" class="btn"
+        style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

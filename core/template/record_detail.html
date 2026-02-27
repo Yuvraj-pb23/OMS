@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}{{ record.ref_no }} — CCPCR OMS{% endblock %}
+{% block header_title %}Record Detail{% endblock %}
+
+{% block content %}
+
+<!-- Record Details -->
+<div class="card" style="margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <h3 class="card-title" style="margin-bottom: 0;">
+      <i class="fas fa-{% if record.record_type == 'LETTER' %}envelope{% else %}exclamation-circle{% endif %}"
+        style="color: {% if record.record_type == 'LETTER' %}var(--accent){% else %}var(--danger){% endif %};"></i>
+      {{ record.get_record_type_display }} Details
+    </h3>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'forward_record' record.pk %}" class="btn"
+        style="padding: 6px 14px; font-size: 0.78rem; background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3);">
+        <i class="fas fa-share"></i> Forward
+      </a>
+      <a href="{% url 'reply_record' record.pk %}" class="btn"
+        style="padding: 6px 14px; font-size: 0.78rem; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">
+        <i class="fas fa-reply"></i> Reply
+      </a>
+      <a href="{% url 'index' %}" class="btn"
+        style="padding: 6px 14px; font-size: 0.78rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Reference
+          Number</span>
+        <div
+          style="font-weight: 700; font-size: 1.05rem; color: {% if record.record_type == 'LETTER' %}var(--accent){% else %}var(--danger){% endif %}; margin-top: 2px;">
+          {{ record.ref_no }}</div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Subject</span>
+        <div style="font-weight: 600; margin-top: 2px;">{{ record.subject }}</div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Sender</span>
+        <div style="margin-top: 2px;">{{ record.sender_name }}</div>
+      </div>
+      {% if record.sender_contact %}
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Contact</span>
+        <div style="margin-top: 2px;">{{ record.sender_contact }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div>
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Status</span>
+        <div style="margin-top: 4px;"><span class="badge badge-{{ record.status|lower }}">{{ record.status }}</span>
+        </div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Priority</span>
+        <div style="margin-top: 4px;"><span class="badge badge-{{ record.priority|lower }}">{{ record.priority }}</span>
+        </div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Date
+          Received</span>
+        <div style="margin-top: 2px;">{{ record.received_date|date:"d M Y" }}</div>
+      </div>
+      {% if record.filed_against %}
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Filed
+          Against</span>
+        <div style="margin-top: 2px;">{{ record.filed_against }}</div>
+      </div>
+      {% endif %}
+      {% if record.department %}
+      <div style="margin-bottom: 14px;">
+        <span
+          style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Assigned
+          Department</span>
+        <div style="margin-top: 2px;">{{ record.department.name }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if record.description %}
+  <div style="margin-top: 8px;">
+    <span
+      style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Description</span>
+    <div
+      style="margin-top: 6px; padding: 16px; background: var(--bg-input); border-radius: 10px; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7;">
+      {{ record.description }}</div>
+  </div>
+  {% endif %}
+
+  {% if record.notes %}
+  <div style="margin-top: 14px;">
+    <span
+      style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Internal
+      Notes</span>
+    <div
+      style="margin-top: 6px; padding: 16px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15); border-radius: 10px; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7;">
+      {{ record.notes }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Forwarding History -->
+<div class="card" style="margin-bottom: 24px;">
+  <h3 class="card-title"><i class="fas fa-route" style="color: var(--warning);"></i> Forwarding History</h3>
+  {% if forwards %}
+  {% for f in forwards %}
+  <div
+    style="padding: 14px 16px; background: var(--bg-input); border-radius: 10px; margin-bottom: 10px; border-left: 3px solid var(--warning);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div
+          style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center;">
+          <i class="fas fa-arrow-right" style="color: #fbbf24; font-size: 0.75rem;"></i>
+        </div>
+        <div>
+          <span style="font-weight: 600; font-size: 0.9rem;">{{ f.forwarded_to.name }}</span>
+          {% if f.forwarded_by %}
+          <span style="color: var(--text-muted); font-size: 0.8rem;"> — forwarded by {{ f.forwarded_by_display }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">{{ f.forwarded_at|timesince }} ago</span>
+    </div>
+    {% if f.notes %}
+    <div
+      style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; padding-left: 42px; line-height: 1.5;">
+      {{ f.notes }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state" style="padding: 28px;">
+    <i class="fas fa-route" style="font-size: 1.5rem;"></i>
+    <p style="margin-top: 8px;">Not forwarded to any department yet</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Replies -->
+<div class="card" style="margin-bottom: 24px;">
+  <h3 class="card-title"><i class="fas fa-comments" style="color: var(--success);"></i> Department Replies</h3>
+  {% if replies %}
+  {% for r in replies %}
+  <div
+    style="padding: 14px 16px; background: var(--bg-input); border-radius: 10px; margin-bottom: 10px; border-left: 3px solid var(--success);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 600; font-size: 0.9rem;">{{ r.replied_by_display }}</span>
+        {% if r.department_display %}
+        <span
+          style="background: rgba(139,92,246,0.15); color: #a78bfa; padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{{ r.department_display }}</span>
+        {% endif %}
+      </div>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">{{ r.created_at|timesince }} ago</span>
+    </div>
+    <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;">{{ r.content }}</div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state" style="padding: 28px;">
+    <i class="fas fa-comments" style="font-size: 1.5rem;"></i>
+    <p style="margin-top: 8px;">No replies received yet</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
